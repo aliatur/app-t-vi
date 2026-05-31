@@ -1,0 +1,23 @@
+{
+  "name": "tuvi-calculator",
+  "version": "1.0.0",
+  "description": "Tử Vi Calculator API - Web app tính và luận giải lá số Tử Vi Đẩu Số chuẩn xác",
+  "main": "dist/api/server.js",
+  "scripts": {
+    "test": "npx tsx src/tests/index.test.ts",
+    "build": "tsc",
+    "start": "node dist/api/server.js",
+    "dev": "tsx src/api/server.ts"
+  },
+  "keywords": ["tuvi", "astrology", "vietnamese", "lunar-calendar", "zodiac"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "iztro": "^2.5.8"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "tsx": "^4.22.3",
+    "typescript": "^6.0.3"
+  }
+}
