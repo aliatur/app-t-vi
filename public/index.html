@@ -280,8 +280,13 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="apiKey">API Key (Tùy chọn)</label>
-                    <input type="text" id="apiKey" placeholder="Để trống nếu không yêu cầu">
+                    <label for="geminiApiKey">🔑 Gemini API Key</label>
+                    <input type="password" id="geminiApiKey" placeholder="Nhập Gemini API Key của bạn (ví dụ: AIzaSy...)">
+                </div>
+
+                <div class="form-group">
+                    <label for="serverUrl">🌐 Server URL (Tùy chọn)</label>
+                    <input type="text" id="serverUrl" placeholder="Để trống nếu dùng server hiện tại" value="">
                 </div>
 
                 <button type="submit" class="btn" id="submitBtn">
@@ -408,9 +413,15 @@
     </div>
 
     <script>
-        const API_BASE_URL = window.location.origin;
-
         // Helper functions
+        function getBaseUrl() {
+            const serverUrl = document.getElementById('serverUrl').value.trim();
+            if (serverUrl) {
+                return serverUrl.replace(/\/$/, '');
+            }
+            return window.location.origin;
+        }
+
         function formatDate(dateStr) {
             const date = new Date(dateStr);
             return date.toLocaleDateString('vi-VN', {
@@ -442,7 +453,7 @@
             const birthTime = document.getElementById('birthTime').value;
             const birthPlace = document.getElementById('birthPlace').value;
             const gender = document.getElementById('gender').value;
-            const apiKey = document.getElementById('apiKey').value;
+            const geminiApiKey = document.getElementById('geminiApiKey').value.trim();
 
             if (!birthDate || !birthTime || !birthPlace || !gender) {
                 showMessage('error', 'Vui lòng điền đầy đủ thông tin!');
@@ -463,28 +474,42 @@
                     gender: gender
                 };
 
-                // Call API
-                const response = await fetch(`${API_BASE_URL}/api/calculate`, {
+                // Get base URL
+                const baseUrl = getBaseUrl();
+
+                // Call API with Gemini API Key
+                const response = await fetch(`${baseUrl}/api/calculate`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        ...(apiKey ? {'X-API-Key': apiKey} : {})
+                        ...(geminiApiKey ? {'X-API-Key': geminiApiKey} : {})
                     },
                     body: JSON.stringify(requestData)
                 });
                 
-                const result = await response.json();
-                
                 if (!response.ok) {
-                    throw new Error(result.error || 'API error');
+                    let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = errorData.error || errorMessage;
+                    } catch (e) {
+                        // Ignore parsing error
+                    }
+                    throw new Error(errorMessage);
                 }
+                
+                const result = await response.json();
                 
                 // Display results
                 displayResults(result);
                 
             } catch (error) {
-                showMessage('error', `Có lỗi xảy ra: ${error.message}`);
-                console.error(error);
+                console.error('Fetch error:', error);
+                let errorMsg = error.message || 'Không rõ lỗi';
+                if (errorMsg.includes('Failed to fetch')) {
+                    errorMsg = 'Không thể kết nối đến server. Vui lòng kiểm tra:\n1. Server đang chạy\n2. URL server đúng\n3. Kết nối mạng ổn định';
+                }
+                showMessage('error', `Có lỗi xảy ra: ${errorMsg}`);
             } finally {
                 document.getElementById('loading').classList.remove('active');
                 document.getElementById('resultSection').classList.add('active');
